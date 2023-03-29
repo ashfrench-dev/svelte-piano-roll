@@ -12,7 +12,7 @@
 
 ```
 <script>
-  import { PianoRoll }  from '@ashfrench-dev/svelte-pianoroll'
+  import { PianoRoll }  from '@ashfrench-dev/svelte-piano-roll'
 
   let startingKey = 35
   let keyCount = 18
