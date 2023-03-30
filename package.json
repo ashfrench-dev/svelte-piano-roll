@@ -1,6 +1,6 @@
 {
 	"name": "@ashfrench-dev/svelte-piano-roll",
-	"version": "0.0.1",
+	"version": "0.0.3",
 	"description": "A simple and flexible piano roll widget built with Svelte",
 	"keywords": [
 		"component",

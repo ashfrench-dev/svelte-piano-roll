@@ -11,7 +11,7 @@
   // - highlight_keys: array
   // - on_key_press: function
   // - on_key_unpress: function
-  export let starting_key, key_count, options;
+  export let starting_key, key_count, height, width, show_note_labels, show_highlight_keys, highlight_keys, on_key_press, on_key_unpress;
 
   // set some defaults
   let keys = { black: [], white: [] }
@@ -26,66 +26,18 @@
   let isLeadingBlackHalfKeyInvisible = false
   let isTrailingBlackHalfKeyInvisible = false
 
-  // start loading parameters
-  let startingKey = starting_key
-  if (isNaN(startingKey) || startingKey < 1 || startingKey > highestPossibleKey) {
-    startingKey = defaultStartingKey
-  }
+  let startingKey, keyCount, pianoHeight, pianoWidth, showNoteLabels, showHighlightKeys, highlightKeys, onKeyPress, onKeyUnpress, endingKeyNumber;
+
+  // optional parameters
+  pianoHeight = '100%'
+  pianoWidth = '100%'
+  showNoteLabels = false
+  showHighlightKeys = false
+  highlightKeys = []
+  onKeyPress = (e) => {}
+  onKeyUnpress = (e) => {}
+
   
-  let keyCount = key_count
-  if (isNaN(keyCount) || keyCount < lowestPossibleKey || keyCount > highestPossibleKey) {
-    keyCount = defaultKeyCount
-  }
-
-  if (startingKey + keyCount > highestPossibleKey) {
-    keyCount = highestPossibleKey - startingKey
-  }
-  
-  let endingKeyNumber = startingKey + keyCount - 1
-
-  // options parameters
-  let height = '100%'
-  let width = '100%'
-  let showNoteLabels = false
-  let showHighlightNotes = false
-  let highlightNotes = []
-  let onKeyPress = (e) => {}
-  let onKeyUnpress = (e) => {}
-
-  if (typeof options === 'object') {
-    try {
-      if (Object.hasOwn(options, 'height') && typeof options.height === 'string') {
-        height = options.height
-      }
-
-      if (Object.hasOwn(options, 'width') && typeof options.width === 'string') {
-        width = options.width
-      }
-
-      if (Object.hasOwn(options, 'show_note_labels') && typeof options.show_note_labels === 'boolean') {
-        showNoteLabels = options.show_note_labels
-      }
-
-      if (Object.hasOwn(options, 'show_highlight_keys') && typeof options.show_highlight_keys === 'boolean') {
-        showHighlightNotes = options.show_highlight_keys
-      }
-
-      if (Object.hasOwn(options, 'highlight_keys') && Array.isArray(options.highlight_keys)) {
-        highlightNotes = options.highlight_keys
-      }
-
-      if (Object.hasOwn(options, 'on_key_press') && typeof options.on_key_press === 'function') {
-        onKeyPress = options.on_key_press
-      }
-
-      if (Object.hasOwn(options, 'on_key_unpress') && typeof options.on_key_unpress === 'function') {
-        onKeyUnpress = options.on_key_unpress
-      }
-    } catch (exception) {
-      // we tried and failed
-      console.log('PianoRoll.svelte: error loading options:\n', exception)
-    }
-  }
 
   function isBlackKey(param_key_number) {
     let blackKeyNumbers = [2, 5, 7, 10, 12, 14, 17, 19, 22, 24, 26, 29, 31, 34, 36, 38, 41, 43, 46, 48, 50, 53, 55, 58, 60, 62, 65, 67, 70, 72, 74, 77, 79, 82, 84, 86]
@@ -105,8 +57,77 @@
     return spacerKeyNumbers.includes(param_key_number)
   }
 
+  function setPianoData(param_starting_key, 
+                        param_key_count, 
+                        param_height, 
+                        param_width, 
+                        param_show_note_labels, 
+                        param_show_highlight_keys, 
+                        param_highlight_keys, 
+                        param_on_key_press, 
+                        param_on_key_unpress) {
+    // start loading parameters
+    startingKey = param_starting_key
+    if (isNaN(startingKey) || startingKey < 1 || startingKey > highestPossibleKey) {
+      startingKey = defaultStartingKey
+    }
+    
+    keyCount = param_key_count
+    if (isNaN(keyCount) || keyCount < lowestPossibleKey || keyCount > highestPossibleKey) {
+      keyCount = defaultKeyCount
+    }
+  
+    if (startingKey + keyCount > highestPossibleKey) {
+      keyCount = highestPossibleKey - startingKey + 1
+    }
+    
+    endingKeyNumber = startingKey + keyCount - 1
+
+    // optional parameters
+    try {
+      if (typeof param_height === 'string') {
+        pianoHeight = param_height
+      }
+  
+      if (typeof param_width === 'string') {
+        pianoWidth = param_width
+      }
+  
+      if (typeof param_show_note_labels === 'boolean') {
+        showNoteLabels = param_show_note_labels
+      }
+  
+      if (typeof param_show_highlight_keys === 'boolean') {
+        showHighlightKeys = param_show_highlight_keys
+      }
+  
+      if (Array.isArray(param_highlight_keys)) {
+        highlightKeys = param_highlight_keys
+      }
+  
+      if (typeof param_on_key_press === 'function') {
+        onKeyPress = param_on_key_press
+      }
+  
+      if (typeof param_on_key_unpress === 'function') {
+        onKeyUnpress = param_on_key_unpress
+      }
+    } catch (exception) {
+      // we tried and failed
+      console.log('PianoRoll.svelte: error loading options:\n', exception)
+    }
+
+    keys = orderKeys(startingKey, keyCount)
+
+    hasLeadingWhiteHalfKey = isBlackKey(startingKey)
+    hasLeadingBlackHalfKey = isWhiteKey(startingKey)
+    hasTrailingWhiteHalfKey = isBlackKey(endingKeyNumber)
+    hasTrailingBlackHalfKey = isWhiteKey(endingKeyNumber)
+    isLeadingBlackHalfKeyInvisible = needsSpacerKey(startingKey - 1) || startingKey == lowestPossibleKey
+    isTrailingBlackHalfKeyInvisible = needsSpacerKey(endingKeyNumber) || endingKeyNumber == highestPossibleKey
+  }
+
   function orderKeys(param_starting_key, param_key_count) {
-    console.log('endingKeyNumber was', endingKeyNumber)
     let currentKey = param_starting_key
     let runs = 0
     let result = {
@@ -131,7 +152,6 @@
 
       if (runs >= param_key_count || currentKey == highestPossibleKey) {
         endingKeyNumber = currentKey
-        console.log('endingKeyNumber is', endingKeyNumber)
 
         if (needsSpacerKey(endingKeyNumber)) {
           result.black.pop()
@@ -183,20 +203,6 @@
 
     return false
   }
-
-  keys = orderKeys(startingKey, keyCount)
-
-  hasLeadingWhiteHalfKey = isBlackKey(startingKey)
-  hasLeadingBlackHalfKey = isWhiteKey(startingKey)
-  hasTrailingWhiteHalfKey = isBlackKey(endingKeyNumber)
-  hasTrailingBlackHalfKey = isWhiteKey(endingKeyNumber)
-  isLeadingBlackHalfKeyInvisible = needsSpacerKey(startingKey - 1) || startingKey == lowestPossibleKey
-  isTrailingBlackHalfKeyInvisible = needsSpacerKey(endingKeyNumber) || endingKeyNumber == highestPossibleKey
-
-  console.log('here we go!')
-  console.log(startingKey)
-  console.log(keyCount)
-  console.log(options)
 </script>
 
 <style>
@@ -302,14 +308,16 @@
   }
 </style>
 
-<div class="pianoroll" style="width: {width}; height: {height}; position: relative; overflow: hidden;">
+<input type="hidden" value="{setPianoData(starting_key, key_count, height, width, show_note_labels, show_highlight_keys, highlight_keys, on_key_press, on_key_unpress)}"/>
+
+<div class="pianoroll" style="height: {pianoHeight}; width: {pianoWidth}; position: relative; overflow: hidden;">
   <div style="z-index: 10; width: 100%; height: 60%; position: absolute; top: 0; display: flex; flex-direction: row; pointer-events: none;">
     {#if hasLeadingBlackHalfKey}
       {#if isLeadingBlackHalfKeyInvisible}
         <div class="key black-key leading-half-key invisible" style="flex: 1;"></div>
       {:else}
         <div 
-          class="key black-key leading-half-key {highlightNotes.includes(startingKey - 1) && showHighlightNotes ? 'highlighted' : ''}"
+          class="key black-key leading-half-key {highlightKeys.includes(startingKey - 1) && showHighlightKeys ? 'highlighted' : ''}"
           style="flex: 1; pointer-events: auto;"
           data-pressed="false"
           data-key-number="{startingKey - 1}"
@@ -325,7 +333,7 @@
         <div class="key black-key invisible" style="flex: 2;"></div>
       {:else}
         <div 
-          class="key black-key {highlightNotes.includes(blackKey) && showHighlightNotes ? 'highlighted' : ''}"
+          class="key black-key {highlightKeys.includes(blackKey) && showHighlightKeys ? 'highlighted' : ''}"
           style="flex: 2; position: relative; pointer-events: auto;"
           data-pressed="false"
           data-key-number="{blackKey}"
@@ -351,7 +359,7 @@
         <div class="key black-key trailing-half-key invisible" style="flex: 1;"></div>
       {:else}
         <div 
-          class="key black-key trailing-half-key {highlightNotes.includes(endingKeyNumber + 1) && showHighlightNotes ? 'highlighted' : ''}"
+          class="key black-key trailing-half-key {highlightKeys.includes(endingKeyNumber + 1) && showHighlightKeys ? 'highlighted' : ''}"
           style="flex: 1; pointer-events: auto;"
           data-pressed="false"
           data-key-number="{endingKeyNumber + 1}"
@@ -366,7 +374,7 @@
   <div style="width: 100%; height: 100%; position: absolute; top: 0; display: flex; flex-direction: row;">
     {#if hasLeadingWhiteHalfKey}
       <div 
-        class="key white-key leading-half-key {highlightNotes.includes(startingKey - 1) && showHighlightNotes ? 'highlighted' : ''}"
+        class="key white-key leading-half-key {highlightKeys.includes(startingKey - 1) && showHighlightKeys ? 'highlighted' : ''}"
         style="flex: 1;"
         data-pressed="false"
         data-key-number="{startingKey - 1}"
@@ -378,7 +386,7 @@
     {/if}
     {#each keys.white as whiteKey}
       <div 
-        class="key white-key {highlightNotes.includes(whiteKey) && showHighlightNotes ? 'highlighted' : ''}"
+        class="key white-key {highlightKeys.includes(whiteKey) && showHighlightKeys ? 'highlighted' : ''}"
         style="flex: 4; text-align: center; position: relative; pointer-events: auto;"
         data-pressed="false"
         data-key-number="{whiteKey}"
@@ -398,7 +406,7 @@
     {/each}
     {#if hasTrailingWhiteHalfKey}
       <div 
-        class="key white-key trailing-half-key {highlightNotes.includes(endingKeyNumber + 1) && showHighlightNotes ? 'highlighted' : ''}"
+        class="key white-key trailing-half-key {highlightKeys.includes(endingKeyNumber + 1) && showHighlightKeys ? 'highlighted' : ''}"
         style="flex: 1; pointer-events: auto;"
         data-pressed="false"
         data-key-number="{endingKeyNumber + 1}"

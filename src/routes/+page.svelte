@@ -3,15 +3,13 @@
 
   let startingKey = 35
   let keyCount = 18
-  let options = {
-    height: '100%',
-    width: '100%',
-    show_note_labels: true,
-    show_highlight_keys: true,
-    highlight_keys: [35, 40, 43],
-    on_key_press: (e) => {},
-    on_key_unpress: (e) => {}
-  }
+  let height = '100%'
+  let width = '100%'
+  let showNoteLabels = false
+  let showHighlightKeys = false
+  let highlightKeys = []
+  let onKeyPress = (e) => {}
+  let onKeyUnpress = (e) => {}
 </script>
 
 <svelte:head>
@@ -32,7 +30,16 @@
 
 
 <div style="height: 420px; width: 100%; border: solid 5px gray; box-sizing: border-box;">
-  <PianoRoll starting_key={startingKey} key_count={keyCount} options={options}/>
+  <PianoRoll 
+    starting_key={startingKey}
+    key_count={keyCount}
+    height={height}
+    width={width}
+    show_note_labels={showNoteLabels}
+    show_highlight_keys={showHighlightKeys}
+    highlight_keys={highlightKeys}
+    on_key_press={onKeyPress}
+    on_key_unpress={onKeyUnpress}/>
 </div>
 
-<p>Check out the [Github](https://github.com/ashfrench-dev/svelte-piano-roll) for tips on usage</p>
+<p>Check out the <a href="https://github.com/ashfrench-dev/svelte-piano-roll">Github</a> for tips on usage</p>
